@@ -54,7 +54,8 @@ const [showProgramSuggestions, setShowProgramSuggestions] = useState(false);
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/members") 
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        const response = await fetch(`${apiUrl}/api/members`) 
         if (response.ok) {
           const data = await response.json()
           setMembers(data)
@@ -123,7 +124,8 @@ const [showProgramSuggestions, setShowProgramSuggestions] = useState(false);
     if (!isFormValid()) return;
 
     try {
-        const response = await fetch('/api/members', {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        const response = await fetch(`${apiUrl}/api/members`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -160,7 +162,8 @@ const [showProgramSuggestions, setShowProgramSuggestions] = useState(false);
     if (!currentMember) return;
 
     try {
-        const response = await fetch(`/api/members/${currentMember._id}`, { 
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        const response = await fetch(`${apiUrl}/api/members/${currentMember._id}`, { 
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -185,7 +188,8 @@ const [showProgramSuggestions, setShowProgramSuggestions] = useState(false);
     if (!currentMember) return;
 
     try {
-        const response = await fetch(`/api/members/${currentMember._id}`, { 
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        const response = await fetch(`${apiUrl}/api/members/${currentMember._id}`, { 
             method: 'DELETE',
         });
 
@@ -216,7 +220,8 @@ const handleTransferToAlumni = async () => {
   }
 
   try {
-    const response = await fetch(`/api/members/${currentMember._id}/transfer`, {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    const response = await fetch(`${apiUrl}/api/members/${currentMember._id}/transfer`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

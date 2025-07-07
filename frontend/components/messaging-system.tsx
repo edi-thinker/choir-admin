@@ -17,7 +17,8 @@ export default function MessagingSystem() {
     setSuccess(null);
 
     try {
-      const response = await fetch("/api/messages", {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      const response = await fetch(`${apiUrl}/api/messages`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

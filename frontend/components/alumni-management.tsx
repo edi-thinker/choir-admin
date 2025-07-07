@@ -42,7 +42,8 @@ export default function AlumniManagement() {
     useEffect(() => {
         const fetchAlumni = async () => {
             try {
-                const response = await fetch("/api/alumni"); // Use relative URL
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+                const response = await fetch(`${apiUrl}/api/alumni`); // Use environment variable
                 if (response.ok) {
                     const data = await response.json();
                     setAlumni(data);
@@ -108,7 +109,8 @@ export default function AlumniManagement() {
   // Handle adding a new alumnus
     const handleAddAlumnus = async () => {
         try {
-            const response = await fetch('/api/alumni', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+            const response = await fetch(`${apiUrl}/api/alumni`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -135,7 +137,8 @@ export default function AlumniManagement() {
         if (!currentAlumnus) return;
 
         try {
-            const response = await fetch(`/api/alumni/${currentAlumnus._id}`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+            const response = await fetch(`${apiUrl}/api/alumni/${currentAlumnus._id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -160,7 +163,8 @@ export default function AlumniManagement() {
         if (!currentAlumnus) return;
 
         try {
-            const response = await fetch(`/api/alumni/${currentAlumnus._id}`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+            const response = await fetch(`${apiUrl}/api/alumni/${currentAlumnus._id}`, {
                 method: 'DELETE',
             });
 

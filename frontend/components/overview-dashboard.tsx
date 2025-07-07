@@ -21,11 +21,12 @@ export default function OverviewDashboard() {
         setLoading(true);
         setError(null);
 
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
         // Use Promise.all, but only for the remaining endpoints
         const [membersResponse, alumniResponse, musicSheetsResponse] = await Promise.all([
-          fetch("/api/members/count"),
-          fetch("/api/alumni/count"),
-          fetch("/api/music-sheets/count"),
+          fetch(`${apiUrl}/api/members/count`),
+          fetch(`${apiUrl}/api/alumni/count`),
+          fetch(`${apiUrl}/api/music-sheets/count`),
           // Removed fetch("/api/events/count")
         ]);
 

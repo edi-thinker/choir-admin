@@ -45,7 +45,8 @@ export default function DocumentManagement() {
         const fetchDocuments = async () => {
             try {
                 setIsLoading(true);
-                const response = await fetch("/api/documents");
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+                const response = await fetch(`${apiUrl}/api/documents`);
                 if (response.ok) {
                     const data = await response.json();
                     setDocuments(data);
@@ -145,7 +146,8 @@ export default function DocumentManagement() {
     formData.append("file", newDocument.file); // Append the file
 
     try {
-      const response = await fetch('/api/documents', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      const response = await fetch(`${apiUrl}/api/documents`, {
         method: 'POST',
         body: formData, // Send FormData, *not* JSON
         // No Content-Type header!  Let the browser set it.
@@ -185,7 +187,8 @@ export default function DocumentManagement() {
   };    const handleDeleteDocument = async () => {
         if (!currentDocument) return;
         try {
-            const response = await fetch(`/api/documents/${currentDocument._id}`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+            const response = await fetch(`${apiUrl}/api/documents/${currentDocument._id}`, {
                 method: "DELETE",
             });
 

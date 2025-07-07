@@ -63,7 +63,8 @@ export default function FinancialManagement() {
         const fetchTransactions = async () => {
             try {
                 setLoading(true);
-                const response = await fetch("/api/transactions");
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+                const response = await fetch(`${apiUrl}/api/transactions`);
                 if (response.ok) {
                     const data = await response.json();
                     setTransactions(data);
@@ -155,7 +156,8 @@ export default function FinancialManagement() {
         try {
             setLoading(true);
             setError(null);
-            const response = await fetch('/api/transactions', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+            const response = await fetch(`${apiUrl}/api/transactions`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -203,7 +205,8 @@ export default function FinancialManagement() {
         try {
             setLoading(true);
             setError(null)
-            const response = await fetch(`/api/transactions/${currentTransaction._id}`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+            const response = await fetch(`${apiUrl}/api/transactions/${currentTransaction._id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -245,7 +248,8 @@ export default function FinancialManagement() {
         try {
             setLoading(true);
             setError(null);
-            const response = await fetch(`/api/transactions/${currentTransaction._id}`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+            const response = await fetch(`${apiUrl}/api/transactions/${currentTransaction._id}`, {
                 method: 'DELETE',
             });
 

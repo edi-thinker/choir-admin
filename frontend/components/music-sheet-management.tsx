@@ -44,7 +44,8 @@ export default function MusicSheetManagement() {
         const fetchMusicSheets = async () => {
             try {
                 setIsLoading(true);
-                const response = await fetch("/api/music-sheets");
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+                const response = await fetch(`${apiUrl}/api/music-sheets`);
                 if (response.ok) {
                     const data = await response.json();
                     setMusicSheets(data);
@@ -152,7 +153,8 @@ export default function MusicSheetManagement() {
         formData.append("file", newSheet.file); // Append the file
 
         try {
-            const response = await fetch('/api/music-sheets', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+            const response = await fetch(`${apiUrl}/api/music-sheets`, {
                 method: 'POST',
                 body: formData, // Send FormData, *not* JSON
                 // No Content-Type header!  Let the browser set it.
@@ -193,7 +195,8 @@ export default function MusicSheetManagement() {
     const handleDeleteSheet = async () => {
         if (!currentSheet) return;
         try {
-            const response = await fetch(`/api/music-sheets/${currentSheet._id}`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+            const response = await fetch(`${apiUrl}/api/music-sheets/${currentSheet._id}`, {
                 method: "DELETE",
             });
 
