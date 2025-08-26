@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { PlusCircle, Search, Edit, Trash2, ChevronDown, ChevronUp, UserPlus } from "lucide-react"
+import { PlusCircle, Search, Edit, Trash2, ChevronDown, ChevronUp, UserPlus, GraduationCap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -32,6 +32,8 @@ export default function MemberManagement() {
     email: "",
     program: "",
     voiceGroup: "",
+    academicStartYear: new Date().getFullYear(),
+    studyDurationYears: 3,
   })
   const [sortConfig, setSortConfig] = useState<{
     key: string
@@ -44,6 +46,60 @@ export default function MemberManagement() {
 
 const [showProgramSuggestions, setShowProgramSuggestions] = useState(false);
 
+  // Helper function to calculate current academic year
+  const getCurrentAcademicYear = (startYear: number): number => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // JavaScript months are 0-indexed
+    
+    // Academic year starts in October (month 10)
+    let academicStartYear: number;
+    if (currentMonth >= 10) {
+      academicStartYear = currentYear;
+    } else {
+      academicStartYear = currentYear - 1;
+    }
+    
+    return academicStartYear - startYear + 1;
+  };
+
+  // Helper function to check if a member has completed their studies
+  const hasCompletedStudies = (member: any): boolean => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    
+    // Calculate the year when studies should end (July of final academic year)
+    const finalAcademicYear = member.academicStartYear + member.studyDurationYears - 1;
+    const graduationYear = finalAcademicYear + 1; // July is in the calendar year after academic year started
+    
+    // If we're past July of the graduation year, studies are completed
+    if (currentYear > graduationYear) {
+      return true;
+    }
+    
+    // If we're in the graduation year and past July (month 7), studies are completed
+    if (currentYear === graduationYear && currentMonth > 7) {
+      return true;
+    }
+    
+    return false;
+  };
+
+  // Helper function to get academic year display
+  const getAcademicYearDisplay = (member: any): string => {
+    if (hasCompletedStudies(member)) {
+      return "Graduated";
+    }
+    
+    const currentYear = getCurrentAcademicYear(member.academicStartYear);
+    if (currentYear > member.studyDurationYears) {
+      return "Completed";
+    }
+    
+    return `Year ${currentYear}`;
+  };
+
   const filteredPrograms = useMemo(() => {
     return programInput === ""
       ? allPrograms
@@ -52,21 +108,6 @@ const [showProgramSuggestions, setShowProgramSuggestions] = useState(false);
 
   // Fetch members on component mount
   useEffect(() => {
-    const fetchMembers = async () => {
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-        const response = await fetch(`${apiUrl}/api/members`) 
-        if (response.ok) {
-          const data = await response.json()
-          setMembers(data)
-        } else {
-          console.error("Failed to fetch members:", response.status)
-        }
-      } catch (error) {
-        console.error("Error fetching members:", error)
-      }
-    }
-
     fetchMembers()
   }, []) // Empty dependency array ensures this runs only once on mount
 
@@ -136,7 +177,15 @@ const [showProgramSuggestions, setShowProgramSuggestions] = useState(false);
         if (response.ok) {
             const savedMember = await response.json();
             setMembers([...members, savedMember]); // Add the saved member from the response
-            setNewMember({ name: "", phone: "", email: "", program: "", voiceGroup: "" });
+            setNewMember({ 
+              name: "", 
+              phone: "", 
+              email: "", 
+              program: "", 
+              voiceGroup: "",
+              academicStartYear: new Date().getFullYear(),
+              studyDurationYears: 3
+            });
             setProgramInput("");
             setIsAddDialogOpen(false);
         } else {
@@ -154,7 +203,9 @@ const [showProgramSuggestions, setShowProgramSuggestions] = useState(false);
           newMember.phone.trim() !== "" &&
           newMember.email.trim() !== "" &&
           programInput.trim() !== "" &&
-          newMember.voiceGroup !== ""
+          newMember.voiceGroup !== "" &&
+          newMember.academicStartYear > 0 &&
+          newMember.studyDurationYears > 0
       );
   };
   // Handle editing a member
@@ -246,19 +297,68 @@ const handleTransferToAlumni = async () => {
   }
 };
 
+// Handle checking graduation and auto-transfer
+const handleCheckGraduation = async () => {
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    const response = await fetch(`${apiUrl}/api/members/check-graduation`, {
+      method: 'POST',
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      alert(result.message);
+      
+      // Refresh the members list
+      fetchMembers();
+    } else {
+      console.error("Failed to check graduation:", response.status);
+      alert("Failed to check graduation");
+    }
+  } catch (error) {
+    console.error("Error checking graduation:", error);
+    alert("An unexpected error occurred");
+  }
+};
+
+// Extract fetchMembers function
+const fetchMembers = async () => {
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    const response = await fetch(`${apiUrl}/api/members`) 
+    if (response.ok) {
+      const data = await response.json()
+      setMembers(data)
+    } else {
+      console.error("Failed to fetch members:", response.status)
+    }
+  } catch (error) {
+    console.error("Error fetching members:", error)
+  }
+};
+
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-2xl font-bold text-gray-900">Member Management</h1>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-maroon-600 hover:bg-maroon-700">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Member
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button 
+            onClick={handleCheckGraduation}
+            variant="outline"
+            className="bg-blue-50 text-blue-600 hover:bg-blue-100"
+          >
+            <GraduationCap className="mr-2 h-4 w-4" />
+            Check Graduation
+          </Button>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-maroon-600 hover:bg-maroon-700">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Member
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Add New Member</DialogTitle>
               <DialogDescription>Enter the details of the new choir member.</DialogDescription>
@@ -358,6 +458,42 @@ const handleTransferToAlumni = async () => {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="academicStartYear" className="text-right">
+                  Start Year
+                </Label>
+                <Input
+                  id="academicStartYear"
+                  type="number"
+                  value={newMember.academicStartYear}
+                  onChange={(e) => setNewMember({ ...newMember, academicStartYear: parseInt(e.target.value) || new Date().getFullYear() })}
+                  className="col-span-3"
+                  min="2000"
+                  max={new Date().getFullYear() + 1}
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="studyDurationYears" className="text-right">
+                  Study Years
+                </Label>
+                <Select
+                  value={newMember.studyDurationYears.toString()}
+                  onValueChange={(value) => setNewMember({ ...newMember, studyDurationYears: parseInt(value) })}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select study duration" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 Year</SelectItem>
+                    <SelectItem value="2">2 Years</SelectItem>
+                    <SelectItem value="3">3 Years</SelectItem>
+                    <SelectItem value="4">4 Years</SelectItem>
+                    <SelectItem value="5">5 Years</SelectItem>
+                    <SelectItem value="6">6 Years</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <DialogFooter className="sm:justify-end">
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -369,6 +505,7 @@ const handleTransferToAlumni = async () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="flex items-center space-x-2">
@@ -415,6 +552,9 @@ const handleTransferToAlumni = async () => {
                   {getSortIcon("voiceGroup")}
                 </div>
               </TableHead>
+              <TableHead className="hidden xl:table-cell text-center">
+                Current Year
+              </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -428,6 +568,12 @@ const handleTransferToAlumni = async () => {
                   <TableCell className="hidden md:table-cell">{member.email}</TableCell>
                   <TableCell className="hidden lg:table-cell">{member.program}</TableCell>
                   <TableCell>{member.voiceGroup}</TableCell>
+                  <TableCell className="hidden xl:table-cell text-center">
+                    {member.academicStartYear ? 
+                      getAcademicYearDisplay(member) : 
+                      'N/A'
+                    }
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end space-x-2">
                       <Dialog
@@ -510,6 +656,41 @@ const handleTransferToAlumni = async () => {
                                     <SelectItem value="Alto">Alto</SelectItem>
                                     <SelectItem value="Tenor">Tenor</SelectItem>
                                     <SelectItem value="Bass">Bass</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="edit-academicStartYear" className="text-right">
+                                  Start Year
+                                </Label>
+                                <Input
+                                  id="edit-academicStartYear"
+                                  type="number"
+                                  value={currentMember.academicStartYear || new Date().getFullYear()}
+                                  onChange={(e) => setCurrentMember({ ...currentMember, academicStartYear: parseInt(e.target.value) || new Date().getFullYear() })}
+                                  className="col-span-3"
+                                  min="2000"
+                                  max={new Date().getFullYear() + 1}
+                                />
+                              </div>
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="edit-studyDurationYears" className="text-right">
+                                  Study Years
+                                </Label>
+                                <Select
+                                  value={(currentMember.studyDurationYears || 3).toString()}
+                                  onValueChange={(value) => setCurrentMember({ ...currentMember, studyDurationYears: parseInt(value) })}
+                                >
+                                  <SelectTrigger className="col-span-3">
+                                    <SelectValue placeholder="Select study duration" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="1">1 Year</SelectItem>
+                                    <SelectItem value="2">2 Years</SelectItem>
+                                    <SelectItem value="3">3 Years</SelectItem>
+                                    <SelectItem value="4">4 Years</SelectItem>
+                                    <SelectItem value="5">5 Years</SelectItem>
+                                    <SelectItem value="6">6 Years</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -632,7 +813,7 @@ const handleTransferToAlumni = async () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                   No members found.
                 </TableCell>
               </TableRow>

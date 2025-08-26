@@ -1,12 +1,18 @@
 // backend/src/routes/authRoutes.ts
-import express, { RequestHandler } from "express";
+import express, { RequestHandler, Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User"; // Import your User model
+import { authenticateToken } from "../middleware/authMiddleware";
 import dotenv from 'dotenv';
 
 dotenv.config()
 const router = express.Router();
+
+// Interface for authenticated requests
+interface AuthRequest extends Request {
+    user?: { id: string; role: string };
+}
 
 // Login route
 router.post("/login", (async (req, res) => {
@@ -59,6 +65,48 @@ router.post("/login", (async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server error during login" });
+    }
+}) as RequestHandler);
+
+// Change password route
+router.put("/change-password", authenticateToken as any, (async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const userId = (req as any).user?.id; // Get user ID from auth middleware
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ message: "Current password and new password are required." });
+        }
+
+        if (!userId) {
+            return res.status(401).json({ message: "User not authenticated" });
+        }
+
+        // Find the user by ID
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Check if the current password is correct
+        const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+        if (!isCurrentPasswordValid) {
+            return res.status(400).json({ message: "Current password is incorrect" });
+        }
+
+        // Validate new password (you can add more validation rules here)
+        if (newPassword.length < 6) {
+            return res.status(400).json({ message: "New password must be at least 6 characters long" });
+        }
+
+        // Update the password (the pre-save hook will hash it)
+        user.password = newPassword;
+        await user.save();
+
+        res.status(200).json({ message: "Password changed successfully" });
+    } catch (error) {
+        console.error("Error changing password:", error);
+        res.status(500).json({ message: "Server error during password change" });
     }
 }) as RequestHandler);
 

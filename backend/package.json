@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build":"tsc",
+    "build": "tsc",
     "start": "node dist/server.js",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts"
   },
@@ -30,6 +30,7 @@
     "@types/mongoose": "^5.11.96",
     "@types/multer": "^1.4.12",
     "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.2"
   },
   "description": ""

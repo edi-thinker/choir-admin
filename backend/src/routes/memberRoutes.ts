@@ -8,7 +8,36 @@ const router = express.Router()
 router.get("/", async (req, res) => {
   try {
     const members = await Member.find()
-    res.json(members)
+    
+    // Check for members who have completed their studies and auto-transfer them
+    const completedMembers = members.filter(member => member.hasCompletedStudies());
+    
+    if (completedMembers.length > 0) {
+      // Auto-transfer completed members to alumni
+      for (const member of completedMembers) {
+        // Calculate the actual graduation year (July of final academic year)
+        const finalAcademicYear = member.academicStartYear + member.studyDurationYears - 1;
+        const graduationYear = finalAcademicYear + 1; // July is in the calendar year after academic year started
+        
+        const newAlumnus = new Alumnus({
+          name: member.name,
+          phone: member.phone,
+          email: member.email,
+          program: member.program,
+          voiceGroup: member.voiceGroup,
+          yearCompleted: graduationYear.toString(),
+        });
+        
+        await Alumnus.create(newAlumnus);
+        await Member.findByIdAndDelete(member._id);
+      }
+      
+      // Fetch remaining members after auto-transfer
+      const remainingMembers = await Member.find();
+      res.json(remainingMembers);
+    } else {
+      res.json(members);
+    }
   } catch (error) {
     res.status(500).json({ message: "Error fetching members", error })
   }
@@ -66,6 +95,7 @@ router.post("/:id/transfer", (async (req, res) => { // Remove explicit RequestHa
           name: member.name,
           phone: member.phone,
           email: member.email,
+          program: member.program,
           voiceGroup: member.voiceGroup,
           yearCompleted,
       });
@@ -79,6 +109,48 @@ router.post("/:id/transfer", (async (req, res) => { // Remove explicit RequestHa
       res.status(500).json({ message: "Error transferring member to alumni", error }); // No return
   }
 }) as RequestHandler<{ id: string }, any, { yearCompleted: string }>); // Keep the type assertion *here*
+
+// Check and auto-transfer completed members
+router.post("/check-graduation", (async (req, res) => {
+  try {
+    const members = await Member.find();
+    const completedMembers = members.filter(member => member.hasCompletedStudies());
+    
+    if (completedMembers.length === 0) {
+      return res.json({ message: "No members to transfer", transferred: 0 });
+    }
+    
+    const transferredMembers = [];
+    
+    for (const member of completedMembers) {
+      // Calculate the actual graduation year (July of final academic year)
+      const finalAcademicYear = member.academicStartYear + member.studyDurationYears - 1;
+      const graduationYear = finalAcademicYear + 1; // July is in the calendar year after academic year started
+      
+      const newAlumnus = new Alumnus({
+        name: member.name,
+        phone: member.phone,
+        email: member.email,
+        program: member.program,
+        voiceGroup: member.voiceGroup,
+        yearCompleted: graduationYear.toString(),
+      });
+      
+      await Alumnus.create(newAlumnus);
+      await Member.findByIdAndDelete(member._id);
+      transferredMembers.push(member.name);
+    }
+    
+    res.json({ 
+      message: `Successfully transferred ${completedMembers.length} members to alumni`,
+      transferred: completedMembers.length,
+      memberNames: transferredMembers
+    });
+  } catch (error) {
+    console.error("Error checking graduation:", error);
+    res.status(500).json({ message: "Error checking graduation", error });
+  }
+}) as RequestHandler);
 
 router.get("/count", (async (req, res) => {
   try {

@@ -7,7 +7,7 @@ import type React from "react"
 import { useState, useEffect } from "react" // Import useEffect
 import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation" // Import usePathname
-import { Users, Music, GraduationCap, LogOut, Menu, X, LayoutDashboard, FolderPlus, Wallet } from "lucide-react"
+import { Users, Music, GraduationCap, LogOut, Menu, X, LayoutDashboard, FolderPlus, Wallet, Settings } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import OverviewDashboard from "./overview-dashboard"
 import MemberManagement from "./member-management"
@@ -16,6 +16,7 @@ import AlumniManagement from "./alumni-management"
 import { Button } from "@/components/ui/button"
 import DocumentManagement from "./document-management"
 import FinancialManagement from "./financial-management"
+import ChangePassword from "./change-password"
 
 export default function DashboardLayout({
   children,
@@ -24,6 +25,7 @@ export default function DashboardLayout({
 }) {
   const [activeTab, setActiveTab] = useState("overview")
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
   const { logout, user } = useAuth() // Get user from context
   const router = useRouter()
     const pathname = usePathname();
@@ -95,14 +97,23 @@ const menuItems = getMenuItems()
 
            {/* Add user info section */}
           <div className="px-6 py-4 border-b border-gray-200/50 bg-gradient-to-r from-maroon-25 to-white">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-maroon-500 to-maroon-600 rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-white font-semibold text-sm">{user?.name?.charAt(0)?.toUpperCase()}</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-maroon-500 to-maroon-600 rounded-full flex items-center justify-center shadow-lg">
+                  <span className="text-white font-semibold text-sm">{user?.name?.charAt(0)?.toUpperCase()}</span>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">{user?.name}</p>
+                  <p className="text-xs text-maroon-600 capitalize font-medium">{user?.role} Role</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">{user?.name}</p>
-                <p className="text-xs text-maroon-600 capitalize font-medium">{user?.role} Role</p>
-              </div>
+              <button
+                onClick={() => setIsChangePasswordOpen(true)}
+                className="p-2 text-gray-500 hover:text-maroon-600 hover:bg-maroon-50 rounded-lg transition-all duration-200"
+                title="Change Password"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
@@ -174,6 +185,31 @@ const menuItems = getMenuItems()
                 <X className="h-6 w-6" />
               </button>
             </div>
+            
+            {/* Mobile user info section */}
+            <div className="px-4 py-4 border-b border-gray-200/50 bg-gradient-to-r from-maroon-25 to-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-maroon-500 to-maroon-600 rounded-full flex items-center justify-center shadow-lg">
+                    <span className="text-white font-semibold text-sm">{user?.name?.charAt(0)?.toUpperCase()}</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{user?.name}</p>
+                    <p className="text-xs text-maroon-600 capitalize font-medium">{user?.role} Role</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsChangePasswordOpen(true)
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className="p-2 text-gray-500 hover:text-maroon-600 hover:bg-maroon-50 rounded-lg transition-all duration-200"
+                  title="Change Password"
+                >
+                  <Settings className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
             <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
               {menuItems.map((item) => (
                 <button
@@ -238,6 +274,12 @@ const menuItems = getMenuItems()
           </div>
         </div>
       </main>
+
+      {/* Change Password Dialog */}
+      <ChangePassword 
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
+      />
     </div>
   )
 }
